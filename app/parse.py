@@ -109,7 +109,7 @@ def parse_page(url: str) -> list[Product]:
                 )
                 load_more.click()
 
-            WebDriverWait(driver, 4).until(
+            WebDriverWait(driver, 10).until(
                 lambda driver_: len(
                     driver_.find_elements(By.CLASS_NAME, "thumbnail")
                 )
