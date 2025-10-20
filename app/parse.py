@@ -3,7 +3,6 @@ import time
 from dataclasses import dataclass
 from urllib.parse import urljoin
 
-import selenium
 from selenium import webdriver
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -14,6 +13,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.remote.webelement import WebElement
+
 
 BASE_URL = "https://webscraper.io/"
 HOME_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/")
@@ -31,7 +32,7 @@ class Product:
     num_of_reviews: int
 
 
-def parse_product(element: selenium.webdriver.remote.webelement) -> Product:
+def parse_product(element: WebElement) -> Product:
     title = element.find_element(By.CLASS_NAME, "title").get_attribute("title")
     description = element.find_element(
         By.CLASS_NAME, "description"
@@ -57,7 +58,7 @@ def parse_page(url: str) -> list[Product]:
     products = []
 
     try:
-        accept_btn = WebDriverWait(driver, 0.1).until(
+        accept_btn = WebDriverWait(driver, 1).until(
             expected_conditions.element_to_be_clickable(
                 (
                     By.XPATH,
