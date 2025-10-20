@@ -2,16 +2,18 @@ import csv
 import time
 from dataclasses import dataclass
 from urllib.parse import urljoin
+
+import selenium
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
-    StaleElementReferenceException,
     NoSuchElementException,
+    StaleElementReferenceException,
 )
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.ui import WebDriverWait
 
 BASE_URL = "https://webscraper.io/"
 HOME_URL = urljoin(BASE_URL, "test-sites/e-commerce/more/")
@@ -29,7 +31,7 @@ class Product:
     num_of_reviews: int
 
 
-def parse_product(element: webdriver) -> Product:
+def parse_product(element: selenium.webdriver.remote.webelement) -> Product:
     title = element.find_element(By.CLASS_NAME, "title").get_attribute("title")
     description = element.find_element(
         By.CLASS_NAME, "description"
@@ -54,7 +56,20 @@ def parse_page(url: str) -> list[Product]:
     driver.get(url)
     products = []
 
-    WebDriverWait(driver, 10).until(
+    try:
+        accept_btn = WebDriverWait(driver, 0.1).until(
+            expected_conditions.element_to_be_clickable(
+                (
+                    By.XPATH,
+                    "//button[contains(., 'Accept') or contains(., 'OK')]",
+                )
+            )
+        )
+        accept_btn.click()
+    except Exception:
+        pass
+
+    WebDriverWait(driver, 3).until(
         expected_conditions.presence_of_element_located(
             (By.CLASS_NAME, "thumbnail")
         )
@@ -79,7 +94,7 @@ def parse_page(url: str) -> list[Product]:
                 ");",
                 load_more,
             )
-            time.sleep(0.5)
+            time.sleep(0.1)
 
             try:
                 load_more.click()
@@ -87,14 +102,16 @@ def parse_page(url: str) -> list[Product]:
                 ElementClickInterceptedException,
                 StaleElementReferenceException,
             ):
-                time.sleep(0.5)
+                time.sleep(0.1)
                 load_more = driver.find_element(
                     By.CLASS_NAME, "ecomerce-items-scroll-more"
                 )
                 load_more.click()
 
-            WebDriverWait(driver, 10).until(
-                lambda d: len(d.find_elements(By.CLASS_NAME, "thumbnail"))
+            WebDriverWait(driver, 4).until(
+                lambda driver_: len(
+                    driver_.find_elements(By.CLASS_NAME, "thumbnail")
+                )
                 > len(products)
             )
         except NoSuchElementException:
